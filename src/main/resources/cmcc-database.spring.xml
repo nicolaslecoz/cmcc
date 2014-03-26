@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:oxm="http://www.springframework.org/schema/oxm" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:jms="http://www.springframework.org/schema/jms" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.0.xsd
+                http://www.springframework.org/schema/oxm http://www.springframework.org/schema/oxm/spring-oxm-3.0.xsd
+                http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+                http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
+                http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+                http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+
+	<tx:annotation-driven transaction-manager="cmcc.transactionManager" />
+
+	<!-- DataSource sans Pool de connection JDBC -->
+<!--  
+	<bean id="cmcc.dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="${cmcc.driver.className}" />
+		<property name="url" value="${cmcc.driver.url}" />
+		<property name="username" value="${cmcc.driver.username}" />
+		<property name="password" value="${cmcc.driver.password}" />
+	</bean>
+-->
+	<!-- DataSource avec un Pool de connection JDBC (C3P0)  -->
+	<bean id="cmcc.dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="${cmcc.driver.className}" />
+		<property name="jdbcUrl" value="${cmcc.driver.url}"/> 
+		<property name="user" value="${cmcc.driver.username}"/> 
+		<property name="password" value="${cmcc.driver.password}"/>
+		<property name="minPoolSize" value="${cmcc.hibernate.c3p0.min_size}" />
+		<property name="maxPoolSize" value="${cmcc.hibernate.c3p0.max_size}" />
+		<property name="maxStatements" value="${cmcc.hibernate.c3p0.max_statements}" />
+<!--		<property name="timeout" value="${cmcc.hibernate.c3p0.timeout}" />-->
+	</bean>
+
+<!-- exemple de déclaration d'une session factory avec qlq options exotiques
+	<bean id="sessionFactory" 
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean" 
+		p:dataSource-ref="dataSource"
+		p:configurationClass="org.hibernate.cfg.AnnotationConfiguration"
+		p:packagesToScan="levelup.world.domain">
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">${hibernate.dialect}</prop>
+				<prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+				<prop key="hibernate.format_sql">${hibernate.format_sql}</prop>
+				<prop key="hibernate.generate_statistics">${hibernate.generate_statistics}</prop>
+			</props>
+		</property>
+		<property name="eventListeners">
+			<map>
+				<entry key="merge">
+					<bean
+						class="org.springframework.orm.hibernate3.support.IdTransferringMergeEventListener" />
+				</entry>
+			</map>
+		</property>
+	</bean>
+-->
+
+	<!-- Déclaration d'une sessionFactory Hibernate -->
+<!-- 
+	<bean id="cmcc.sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean"
+		p:dataSource-ref="cmcc.dataSource" p:configurationClass="org.hibernate.cfg.AnnotationConfiguration"
+		p:packagesToScan="com.googlecode.cmcc.cinema.domain">
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.hbm2ddl.auto">${cmcc.hibernate.hbm2ddl.auto}</prop>
+				<prop key="hibernate.dialect">${cmcc.hibernate.dialect}</prop>
+				<prop key="hibernate.generate_statistics">false</prop>
+				<prop key="hibernate.max_fetch_depth">3</prop>
+				<prop key="hibernate.connection.autocommit">false</prop>
+				<prop key="hibernate.show_sql">${cmcc.hibernate.show_sql}</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="cmcc.transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="cmcc.sessionFactory" />
+	</bean>
+-->
+
+	<!-- Déclaration d'un entityManager JPA avec une implementation Hibernate -->
+	<bean id="cmcc.entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+		<property name="jpaVendorAdapter">
+			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter" >
+				<property name="generateDdl" value="${cmcc.hibernate.ddl.generate}" />
+				<property name="databasePlatform" value="${cmcc.hibernate.dialect}" />
+<!-- 				<property name="statisticsEnabled" value="false" /> -->
+<!-- 				<property name="max_fetch_depth" value="3" /> -->
+<!-- 				<property name="connection.autocommit" value="false" /> -->
+				<property name="showSql" value="${cmcc.hibernate.show_sql}" />
+			</bean>
+		</property>
+		<property name="dataSource" ref="cmcc.dataSource" />
+ 		<property name="persistenceUnitName" value="cmcc-cinema-persitence-unit"/>
+	</bean>	
+
+	<bean id="cmcc.transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory" ref="cmcc.entityManagerFactory" />
+	</bean>
+	
+<!--
+	<bean id="cmcc.entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+		<property name="loadTimeWeaver">
+			<bean class="org.springframework.instrument.classloading.InstrumentationLoadTimeWeaver"/>
+		</property>
+	</bean>
+-->
+  
+	<!--  Déclararer une sessionFactory à partir d'une entityManagerFactory -->
+<!--
+	<bean id="sessionFactory" factory-bean="entityManagerFactory"
+   		factory-method="getSessionFactory" />
+-->
+</beans>
